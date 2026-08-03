@@ -180,3 +180,54 @@ During the Camera implementation, protocol functionality was intentionally divid
 By the time development transitioned to the Audio protocol, the architecture and upstream workflow had stabilized. Development therefore shifted to a feature-complete, test-driven approach where each protocol operation was implemented alongside its corresponding `ztest` validation in the same commit before progressing to the next operation.
 
 This iterative workflow resulted in smaller review cycles, consistently passing CI, and a significantly smoother upstream review process.
+
+---
+
+## Engineering Decisions
+
+Several architectural decisions shaped the implementation throughout the project. Rather than optimizing solely for feature completeness, the focus was on producing maintainable, upstream-quality code that integrates naturally with the existing Zephyr ecosystem.
+
+### Hardware-Independent Development
+
+Protocol correctness and hardware correctness are fundamentally different engineering problems.
+
+To isolate protocol behavior from hardware-specific issues, development began entirely within Zephyr's `native_sim` environment using virtual Camera and Audio drivers. This enabled protocol routing, message parsing, and state transitions to be validated in software before introducing physical hardware into the development cycle.
+
+As a result, most protocol issues were resolved long before deployment on BeaglePlay hardware, significantly reducing debugging complexity.
+
+### Upstream-First Design
+
+Whenever existing Zephyr APIs evolved during development, the implementation was updated to follow the new interfaces rather than maintaining compatibility layers.
+
+Examples include:
+
+- Migration from the legacy `gb_operation` interface to the newer `gb_message` API.
+- Adoption of the `video_driver_flush` API after its introduction upstream.
+
+Keeping the implementation aligned with current upstream APIs reduced technical debt and ensured long-term maintainability.
+
+### Deterministic Memory Management
+
+Multimedia streaming introduces sustained data movement, making predictable memory behavior important for embedded systems.
+
+Protocol buffers and temporary objects therefore avoid dynamic heap allocation wherever practical, relying instead on static allocation and Zephyr kernel primitives such as `k_mem_slab`.
+
+This design minimizes fragmentation while providing deterministic allocation behavior during protocol execution.
+
+### Test-Driven Feature Development
+
+Development of the Audio subsystem followed a test-driven workflow.
+
+Each protocol operation was implemented together with its corresponding `ztest` validation before moving to the next feature. Every logical feature therefore entered the repository together with automated regression tests, helping keep the Continuous Integration pipeline green throughout development.
+
+This approach significantly reduced integration issues compared to validating functionality after implementation.
+
+### Incremental Upstreaming
+
+The Camera subsystem was intentionally developed through multiple focused pull requests.
+
+Early review feedback helped refine subsystem architecture, coding style, and API usage before additional functionality was introduced.
+
+The lessons learned during Camera development directly influenced the Audio implementation, allowing substantially more functionality to be delivered through fewer pull requests while requiring significantly fewer review iterations.
+
+Rather than simply reducing the number of PRs, the goal was to continuously improve the development workflow as the project matured.
