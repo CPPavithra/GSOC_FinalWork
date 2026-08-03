@@ -7,104 +7,41 @@
 
 ---
 
+| | |
+|---|---|
+| **Subsystem** | Greybus |
+| **Protocols** | Camera, Audio |
+| **Language** | C |
+| **Development Model** | Upstream First |
+| **Target Platform** | Zephyr RTOS |
+| **Validation** | `native_sim`, `ztest`, Twister |
+
+---
+
 ## Overview
 
-This repository documents the implementation, architecture, and validation of the Greybus Camera and Audio protocols added to Zephyr during Google Summer of Code 2026.
+This repository documents the implementation of the Greybus Camera and Audio protocols developed for Zephyr during Google Summer of Code 2026.
 
-Greybus sits between the Linux multimedia stack and Zephyr device drivers. Incoming protocol messages are translated into native driver operations, allowing Linux applications to interact with embedded peripherals through a standardized, transport-independent interface.
+Greybus provides a standardized protocol for connecting Linux hosts with embedded peripherals. While the Greybus transport layer already existed in Zephyr, multimedia support remained incomplete.
 
-Prior to this work, Zephyr lacked upstream implementations of the Greybus Camera and Audio protocols, limiting multimedia support for Greybus peripherals. The implementation bridges Linux multimedia interfaces (V4L2 and ALSA) with Zephyr's native Video and Audio Codec APIs, enabling hardware such as the BeaglePlay to route multimedia streams between Linux hosts and Zephyr-based peripherals.
+This project extends the subsystem by implementing the missing Camera and Audio protocols, bridging Linux multimedia interfaces (V4L2 and ALSA) with Zephyr's native Video and Audio Codec APIs.
 
-The project was developed with an upstream-first philosophy, emphasizing maintainability, deterministic behavior, hardware-independent validation, and incremental upstream integration.
+The implementation emphasizes:
 
----
-
-## Scope
-
-| Component | Status |
-|-----------|:------:|
-| Greybus Camera Protocol | ✅ Complete |
-| Greybus Audio Protocol | ✅ Complete |
-| Fake Camera Driver | ✅ Complete |
-| Fake Audio Codec Driver | ✅ Complete |
-| `ztest` Validation | ✅ Complete |
-| `native_sim` Integration | ✅ Complete |
-| Physical Hardware Validation | 🔄 In Progress |
+- Upstream maintainability
+- Hardware abstraction
+- Deterministic memory management
+- Hardware-independent validation
+- Incremental upstream integration
 
 ---
 
-## Project Statistics
+## System Architecture
 
-| Metric | Value |
-|---------|-------|
-| Program | Google Summer of Code 2026 |
-| Duration | 12 Weeks |
-| Target RTOS | Zephyr |
-| Programming Language | C |
-| Protocols Implemented | 2 |
-| Fake Drivers Added | 2 |
-| Pull Requests | *(Update after final submission)* |
-| Unit Tests | *(Update after final submission)* |
-| Continuous Integration | Twister |
-| Validation Platform | `native_sim` |
-
----
-
-## Design Goals
-
-The implementation was guided by the following architectural principles.
-
-- Maintain compatibility with upstream Zephyr APIs.
-- Separate protocol logic from hardware-specific drivers.
-- Enable complete hardware-independent validation.
-- Eliminate dynamic memory allocation during protocol execution.
-- Minimize subsystem coupling.
-- Maximize code reuse across protocol implementations.
-- Support incremental upstream review through logically separated pull requests.
-
----
-
-## System Overview
-
-Greybus acts as a protocol translation layer between Linux multimedia frameworks and Zephyr device drivers.
-
-Rather than exposing Zephyr drivers directly to Linux applications, Greybus defines a standardized transport-independent protocol for exchanging multimedia operations. Incoming protocol messages are decoded by protocol handlers and translated into native Zephyr driver API calls.
-
-This layered architecture isolates transport logic from hardware drivers, simplifying testing, improving portability, and enabling complete protocol validation without requiring physical hardware.
-
----
-
-## High-Level Architecture
-
-### Software Stack
-
-```text
-                    Linux Applications
-                            │
-                            ▼
-                     V4L2 / ALSA APIs
-                            │
-                            ▼
-                 Greybus Transport Layer
-                            │
-                            ▼
-             Camera / Audio Protocol Handlers
-                            │
-                            ▼
-              Zephyr Driver Framework APIs
-           (Video API / Audio Codec API)
-                            │
-                            ▼
-              Device Drivers (Real or Fake)
-                            │
-                            ▼
-             Hardware or native_sim Backend
-```
-
-### Component Architecture
+The Greybus multimedia subsystem acts as a translation layer between Linux multimedia frameworks and Zephyr device drivers.
 
 ```mermaid
-flowchart TD
+flowchart LR
 
 subgraph Linux["Linux Host"]
 
@@ -113,17 +50,17 @@ B[ALSA]
 
 end
 
-subgraph Greybus["Greybus Subsystem"]
+subgraph Greybus["Greybus"]
 
-C[Greybus Transport Layer]
+C[Transport Layer]
 
-D[Camera Protocol Handler]
+D[Camera Protocol]
 
-E[Audio Protocol Handler]
+E[Audio Protocol]
 
 end
 
-subgraph APIs["Zephyr Driver APIs"]
+subgraph Zephyr["Zephyr"]
 
 F[Video API]
 
@@ -133,332 +70,113 @@ end
 
 subgraph Drivers["Drivers"]
 
-H[Camera Driver / fake_video]
+H[Camera Driver]
 
-I[Audio Codec Driver / fake_audio]
+I[Audio Codec Driver]
 
 end
 
-A <-->|Camera Operations| C
-
-B <-->|Audio Operations| C
+A --> C
+B --> C
 
 C --> D
-
 C --> E
 
 D --> F
-
 E --> G
 
 F --> H
-
 G --> I
 ```
 
-The Greybus transport layer remains independent of the underlying device drivers. This separation allows protocol implementations to be validated entirely using simulated drivers while remaining compatible with physical hardware.
+Incoming Greybus requests are translated into native Zephyr driver operations while keeping transport logic independent of hardware implementations. This separation enables protocol validation using simulated drivers before deployment on physical hardware.
 
 ---
 
-## Architectural Decisions
+## Deliverables
 
-The implementation prioritizes upstream maintainability through modern Zephyr APIs, deterministic memory management, hardware-independent validation, and incremental upstream review.
+The following table summarizes the primary deliverables produced during the project.
 
-### Deterministic Memory Management
+| Component | Status |
+|-----------|:------:|
+| Greybus Camera Protocol | ✅ |
+| Greybus Audio Protocol | ✅ |
+| Fake Camera Driver | ✅ |
+| Fake Audio Codec Driver | ✅ |
+| `ztest` Validation | ✅ |
+| `native_sim` Support | ✅ |
+| Documentation | ✅ |
 
-Multimedia streaming requires predictable memory behavior and bounded allocation latency. Dynamic heap allocation introduces fragmentation and non-deterministic execution characteristics that are undesirable in embedded systems.
-
-Protocol payloads and intermediate buffers therefore utilize static allocation together with Zephyr's `k_mem_slab` allocator to guarantee deterministic behavior throughout protocol execution.
-
----
-
-### Hardware-Independent Validation
-
-Protocol development was performed using Zephyr's `native_sim` platform before deployment on physical hardware.
-
-By isolating protocol state machines from the underlying transport, unit tests are able to verify packet construction, protocol state transitions, and error handling without requiring I²C, I²S, CSI, or camera hardware.
-
-This significantly reduces debugging complexity while enabling comprehensive automated validation within Continuous Integration.
+A detailed list of upstream pull requests and implementation milestones is provided in the **Pull Requests & Deliverables** section.
 
 ---
 
-### Incremental Upstream Integration
+## Upstream Contributions
 
-Large protocol implementations were intentionally divided into smaller logical pull requests.
+The project followed an incremental upstream development model, with functionality introduced through focused pull requests rather than a single monolithic submission. This reduced review complexity, encouraged early maintainer feedback, and aligned with Zephyr's contribution workflow.
 
-This approach simplifies maintainer review, reduces regression risk, encourages early feedback, and improves long-term maintainability of the subsystem.
+### Project at a Glance
 
-The Camera protocol work additionally modernized portions of the legacy Video API integration, resulting in a net reduction of legacy code while simultaneously expanding subsystem capabilities.
-
----
-
----
-
-# Implementation
-
-The multimedia subsystem is organized around a layered architecture that separates protocol transport, protocol logic, and hardware-specific drivers.
-
-Both the Camera and Audio implementations reuse the same Greybus transport infrastructure while exposing protocol-specific functionality through dedicated handlers.
-
-This organization minimizes subsystem coupling, enables protocol reuse, and allows independent validation of each layer.
+| Metric | Value |
+|---------|------:|
+| **Merged Pull Requests** | **X** |
+| **Commits** | **XX** |
+| **Files Changed** | **XX** |
+| **Lines Added** | **+X,XXX** |
+| **Lines Removed** | **-X,XXX** |
 
 ---
 
-# Shared Infrastructure
+### Camera Subsystem
 
-Although Camera and Audio expose different protocol operations, both implementations follow an identical execution model.
+The Camera protocol formed the foundation of the project and therefore evolved through multiple focused pull requests. Early contributions established the subsystem architecture, while subsequent reviews refined implementation details and aligned the codebase with upstream expectations.
 
-Incoming Greybus requests are decoded by the transport layer, dispatched to the appropriate protocol handler, translated into Zephyr driver API calls, and returned to the Linux host through the Greybus messaging interface.
+This iterative review process helped shape the development workflow used throughout the remainder of the project.
 
-```mermaid
-sequenceDiagram
-
-participant Linux as Linux Host
-participant Transport as Greybus Transport
-participant Handler as Protocol Handler
-participant API as Zephyr Driver API
-participant Driver as Device Driver
-
-Linux->>Transport: Greybus Operation
-
-Transport->>Handler: Decode Request
-
-Handler->>API: Driver API Call
-
-API->>Driver: Hardware Operation
-
-Driver-->>API: Result
-
-API-->>Handler: Driver Response
-
-Handler-->>Transport: Greybus Response
-
-Transport-->>Linux: Protocol Reply
-```
-
-This common execution path significantly reduces duplicated protocol logic while maintaining a consistent software architecture across multiple Greybus multimedia protocols.
+| Pull Request | Status | What it Delivered |
+|---------------|:------:|-------------------|
+| **#105** — Drivers: Camera: Add virtual camera driver for `native_sim` | ✅ Merged | *Update summary* |
+| **#108** — camera: modernize handlers and migrate to `gb_message` API | ✅ Merged | *Update summary* |
+| **#111** — greybus: camera: streaming operations with Zephyr Video API | 🔄 Superseded | Initial implementation that was later refactored and split following upstream review. |
+| **#112** — greybus: camera: implement dynamic stream configuration and capture handlers | ✅ Merged | *Update summary* |
+| **#117** — Camera data plane architecture MVP | ✅ Merged | *Update summary* |
+| **#119** — subsys: camera: migrate to new `video_driver_flush` API | ✅ Merged | *Update summary* |
 
 ---
 
-# Camera Protocol
+### Audio Subsystem
 
-The Greybus Camera protocol provides a transport-independent interface between Linux V4L2 applications and Zephyr's Video subsystem.
+Development of the Audio protocol benefited directly from the review feedback and architectural lessons learned during the Camera implementation.
 
-Incoming Camera protocol operations are translated into native Video API calls while preserving protocol semantics defined by the Greybus specification.
+As a result, the Audio subsystem required fewer pull requests while introducing substantially more functionality per contribution.
 
-## Protocol Architecture
+A test-driven workflow was adopted throughout development: each protocol operation was implemented together with its corresponding `ztest` validation before progressing to the next feature. This ensured that every functional addition was immediately covered by automated tests and helped keep the Continuous Integration pipeline green throughout development.
 
-```mermaid
-flowchart LR
-
-Host[V4L2]
-
-Host --> Transport
-
-Transport --> Camera
-
-Camera --> Video
-
-Video --> Driver
-
-Driver --> Sensor
-```
+| Pull Request | Status | What it Delivered |
+|---------------|:------:|-------------------|
+| **#116** — audio: audio driver for MVP | ✅ Merged | *Update summary* |
+| **#118** — subsys: greybus: Add audio protocol support and `ztest` integration | ✅ Merged | *Update summary* |
 
 ---
 
-## Implemented Operations
+### Development Timeline
 
-| Operation | Description |
-|-----------|-------------|
-| Version Negotiation | Reports supported protocol version |
-| Capability Discovery | Enumerates camera capabilities |
-| Configure Streams | Configures capture streams |
-| Capture | Starts frame acquisition |
-| Flush | Flushes queued buffers |
-| Metadata Translation | Maps Zephyr capabilities to ExtCSI |
-
----
-
-## Capability Translation
-
-One of the primary responsibilities of the Camera protocol is translating Zephyr's internal Video API into Greybus ExtCSI capability descriptors.
-
-The implementation performs translation of:
-
-- Pixel formats
-- Image resolutions
-- Frame intervals
-- Stream configuration
-- Camera metadata
-
-This abstraction allows Linux applications to discover peripheral capabilities without requiring knowledge of Zephyr's internal driver interfaces.
+| Milestone | Outcome |
+|-----------|---------|
+| **Foundation** | Established the development environment and introduced a virtual camera driver for `native_sim`. |
+| **Camera Infrastructure** | Modernized the Camera subsystem and migrated to the `gb_message` API. |
+| **Camera Features** | Added stream configuration, capture handlers, and the Camera data plane. |
+| **Audio Protocol** | Implemented the Audio driver, Greybus Audio protocol, topology handling, and protocol validation. |
+| **API Migration** | Updated the subsystem to use the latest `video_driver_flush` API following upstream changes. |
 
 ---
 
-## Capture Pipeline
+### Development Approach
 
-Frame capture follows the execution path shown below.
+The implementation workflow evolved over the course of the project.
 
-```mermaid
-sequenceDiagram
+During the Camera implementation, protocol functionality was intentionally divided across multiple focused pull requests. This enabled architectural feedback to be incorporated early, reduced review complexity, and established a solid foundation for the multimedia subsystem.
 
-participant Linux
+By the time development transitioned to the Audio protocol, the architecture and upstream workflow had stabilized. Development therefore shifted to a feature-complete, test-driven approach where each protocol operation was implemented alongside its corresponding `ztest` validation in the same commit before progressing to the next operation.
 
-participant Camera
-
-participant Video
-
-participant Driver
-
-Linux->>Camera: CAPTURE
-
-Camera->>Video: video_enqueue()
-
-Video->>Driver: Start Capture
-
-Driver-->>Video: Frame Ready
-
-Video-->>Camera: video_dequeue()
-
-Camera-->>Linux: Greybus Frame Packet
-```
-
----
-
-## Buffer Management
-
-The Camera implementation avoids heap allocation during protocol execution.
-
-Frame buffers are managed using statically allocated memory together with Zephyr synchronization primitives.
-
-Design goals include:
-
-- Deterministic allocation latency
-- Zero heap fragmentation
-- Predictable execution
-- Safe concurrent access
-
----
-
-# Audio Protocol
-
-The Greybus Audio protocol bridges Linux ALSA operations with Zephyr's Audio Codec API.
-
-Rather than implementing codec-specific logic, the protocol provides a generic abstraction layer capable of supporting multiple codecs through Zephyr's driver framework.
-
----
-
-## Protocol Architecture
-
-```mermaid
-flowchart LR
-
-ALSA
-
-↓
-
-Greybus Transport
-
-↓
-
-Audio Protocol
-
-↓
-
-Audio Codec API
-
-↓
-
-Codec Driver
-
-↓
-
-Hardware
-```
-
----
-
-## Implemented Operations
-
-| Operation | Description |
-|-----------|-------------|
-| Version | Protocol negotiation |
-| Set PCM | Configure PCM stream |
-| Get Topology | Enumerate widgets and controls |
-| Enable Widget | Power up DAPM component |
-| Disable Widget | Power down DAPM component |
-| Set Control | Configure mixer/control values |
-| Get Control | Read mixer/control values |
-| Activate TX | Enable transmit path |
-| Activate RX | Enable receive path |
-| Deactivate TX | Disable transmit |
-| Deactivate RX | Disable receive |
-| Jack Events | Notify headset insertion/removal |
-| Button Events | Notify media button presses |
-
----
-
-## Audio Topology
-
-The implementation dynamically generates Greybus topology descriptors from Zephyr Audio Codec properties.
-
-Rather than maintaining protocol-specific metadata, topology information is derived directly from codec capabilities exposed through the driver API.
-
-This ensures protocol responses remain synchronized with the underlying hardware implementation.
-
----
-
-## Event Flow
-
-```mermaid
-sequenceDiagram
-
-participant Driver
-
-participant Codec
-
-participant Audio
-
-participant Linux
-
-Driver->>Codec: Headset Inserted
-
-Codec->>Audio: JACK_EVENT
-
-Audio-->>Linux: Greybus Notification
-
-Linux->>Audio: Acknowledge
-```
-
----
-
-## Power Management
-
-Audio widgets are managed using Greybus DAPM operations.
-
-Widget activation and deactivation are translated into Zephyr Audio Codec API calls, allowing unused portions of the signal path to remain powered down until required.
-
-This mirrors Linux ALSA's Dynamic Audio Power Management model while remaining compatible with Zephyr's driver abstractions.
-
----
-
-# Fake Drivers
-
-Two reusable fake drivers were developed to enable protocol validation independent of physical hardware.
-
-| Driver | Purpose |
-|---------|----------|
-| fake_video | Camera protocol validation |
-| fake_audio | Audio protocol validation |
-
-The fake drivers expose deterministic behavior that allows protocol handlers to be exercised through automated tests without requiring camera sensors or codec hardware.
-
-This significantly improves testing repeatability and Continuous Integration coverage.
-
----
-
-# Implementation Summary
-
-The multimedia subsystem consists of reusable transport infrastructure, protocol-specific handlers, hardware-independent fake drivers, and native Zephyr driver integrations.
-
-This layered design enables protocol validation using `native_sim`, promotes code reuse across Greybus protocols, and simplifies future expansion of the multimedia subsystem.
+This iterative workflow resulted in smaller review cycles, consistently passing CI, and a significantly smoother upstream review process.
