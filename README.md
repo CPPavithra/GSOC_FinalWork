@@ -195,7 +195,7 @@ To isolate protocol behavior from hardware-specific issues, development began en
 
 As a result, most protocol issues were resolved long before deployment on BeaglePlay hardware, significantly reducing debugging complexity.
 
-### Upstream-First Design
+### 1. Upstream-First Design
 
 Whenever existing Zephyr APIs evolved during development, the implementation was updated to follow the new interfaces rather than maintaining compatibility layers.
 
@@ -206,7 +206,7 @@ Examples include:
 
 Keeping the implementation aligned with current upstream APIs reduced technical debt and ensured long-term maintainability.
 
-### Deterministic Memory Management
+### 2. Deterministic Memory Management
 
 Multimedia streaming introduces sustained data movement, making predictable memory behavior important for embedded systems.
 
@@ -214,7 +214,7 @@ Protocol buffers and temporary objects therefore avoid dynamic heap allocation w
 
 This design minimizes fragmentation while providing deterministic allocation behavior during protocol execution.
 
-### Test-Driven Feature Development
+### 3. Test-Driven Feature Development
 
 Development of the Audio subsystem followed a test-driven workflow.
 
@@ -222,7 +222,7 @@ Each protocol operation was implemented together with its corresponding `ztest` 
 
 This approach significantly reduced integration issues compared to validating functionality after implementation.
 
-### Incremental Upstreaming
+### 4. Incremental Upstreaming
 
 The Camera subsystem was intentionally developed through multiple focused pull requests.
 
@@ -231,3 +231,165 @@ Early review feedback helped refine subsystem architecture, coding style, and AP
 The lessons learned during Camera development directly influenced the Audio implementation, allowing substantially more functionality to be delivered through fewer pull requests while requiring significantly fewer review iterations.
 
 Rather than simply reducing the number of PRs, the goal was to continuously improve the development workflow as the project matured.
+
+## Protocol Implementations
+
+The project implements two Greybus multimedia protocols within Zephyr: **Camera** and **Audio**. Both follow the same architectural pattern: Greybus requests are decoded at the protocol layer, translated into native Zephyr subsystem operations, and validated against hardware-independent drivers.
+
+### Camera Protocol
+
+The Greybus Camera implementation bridges Linux camera operations with Zephyr's Video API.
+
+#### Request Flow
+
+```mermaid
+flowchart LR
+    Host["Linux V4L2"]
+    Transport["Greybus Transport"]
+    Camera["Camera Protocol"]
+    Video["Zephyr Video API"]
+    Driver["Camera Driver"]
+    Buffer["Video Buffer"]
+
+    Host -->|Camera Request| Transport
+    Transport --> Camera
+    Camera --> Video
+    Video --> Driver
+    Driver --> Buffer
+    Buffer --> Video
+    Video --> Camera
+    Camera -->|Response / Data| Transport
+    Transport --> Host
+```
+
+#### Protocol Operations
+
+The Camera implementation covers the core stream lifecycle:
+
+| **Operation** | **Purpose** |
+|---|---|
+| **Capability Discovery** | Exposes supported formats, resolutions, and stream capabilities to the host. |
+| **Stream Configuration** | Translates host configuration into Zephyr Video API parameters. |
+| **Capture** | Initiates frame capture and coordinates buffer processing. |
+| **Flush** | Terminates outstanding stream operations and returns queued buffers. |
+
+#### Capability Translation
+
+Greybus Camera capabilities use protocol-specific representations, while Zephyr exposes capabilities through its native Video API. A translation layer was introduced to convert between the two representations without coupling the Greybus protocol directly to a particular camera driver.
+
+This includes the dynamic translation of supported pixel formats and Extended CSI (ExtCSI) metadata.
+
+#### Streaming Data Plane
+
+The Camera data plane was designed separately from the control path. Video buffers are managed through Zephyr's buffer and queueing primitives, while a dedicated work context handles dequeuing, fragmentation, transport, and buffer recycling.
+
+```mermaid
+flowchart TD
+    Capture["Camera Driver"]
+    Queue["Video Buffer Queue"]
+    Work["Camera Data Plane Work Context"]
+    Fragment["Greybus Fragmentation"]
+    Transport["Greybus Transport"]
+    Host["Linux Host"]
+
+    Capture --> Queue
+    Queue --> Work
+    Work --> Fragment
+    Fragment --> Transport
+    Transport --> Host
+    Work -->|Buffer Recycle| Queue
+```
+
+The resulting design keeps buffer management independent from Greybus message handling and avoids blocking the protocol handler while video data is being processed.
+
+#### Camera Driver for `native_sim`
+
+A virtual camera driver, `fake_video`, was introduced to exercise the Camera protocol without requiring physical camera hardware.
+
+The driver implements the required Zephyr Video API operations and provides deterministic frame generation for protocol and integration testing.
+
+This allows stream configuration, capture, queueing, flushing, and error paths to be validated entirely within the Zephyr test environment.
+
+---
+
+### Audio Protocol
+
+The Greybus Audio implementation bridges Linux ALSA operations with Zephyr's Audio Codec API.
+
+#### Request Flow
+
+```mermaid
+flowchart LR
+    Host["Linux ALSA"]
+    Transport["Greybus Transport"]
+    Audio["Audio Protocol"]
+    Codec["Zephyr Audio Codec API"]
+    Driver["Audio Codec Driver"]
+
+    Host -->|Audio Request| Transport
+    Transport --> Audio
+    Audio --> Codec
+    Codec --> Driver
+    Driver --> Codec
+    Codec --> Audio
+    Audio -->|Response / Event| Transport
+    Transport --> Host
+```
+
+#### Protocol Operations
+
+The Audio implementation provides the core control and topology operations required to expose an embedded audio device through Greybus.
+
+| **Operation** | **Purpose** |
+|---|---|
+| **PCM Configuration** | Configures audio stream parameters requested by the host. |
+| **Topology** | Represents codec components and their relationships to the host. |
+| **Activation** | Enables configured audio paths and streams. |
+| **Widget Control** | Enables or disables individual audio components (DAPM). |
+| **Stream Teardown** | Releases active stream state and associated resources. |
+| **Jack / Button Events** | Reports asynchronous hardware events to the host. |
+
+#### Topology Translation
+
+The Audio protocol requires the embedded codec topology to be represented using Greybus-specific structures.
+
+The implementation dynamically translates Zephyr audio properties and codec components into the corresponding Greybus topology representation. This keeps the Greybus representation independent of the underlying codec implementation while allowing different Zephyr audio drivers to use the same protocol layer.
+
+#### Asynchronous Events
+
+Audio events such as jack insertion/removal and button activity originate independently of host requests.
+
+The protocol supports asynchronous, IRQ-safe event handling for `JACK_EVENT` and `BUTTON_EVENT`. This decouples hardware-generated events from synchronous Greybus requests and allows the protocol layer to proactively notify the Linux host when codec state changes.
+
+---
+
+## Validation & Testing
+
+Both protocols were designed to be validated independently of physical multimedia hardware.
+
+The test environment combines Zephyr's `native_sim` platform, virtual drivers, `ztest`, and the Twister test runner.
+
+```mermaid
+flowchart TD
+    Protocol["Protocol Implementation"]
+    Sim["native_sim"]
+    FakeCam["fake_video"]
+    FakeAud["fake_audio"]
+    ZtestCam["ztest - Camera Suite"]
+    ZtestAud["ztest - Audio Suite"]
+    Twister["Twister CI Runner"]
+    CI["Automated CI Validation"]
+
+    Protocol --> Sim
+    Sim --> FakeCam
+    Sim --> FakeAud
+    FakeCam --> ZtestCam
+    FakeAud --> ZtestAud
+    ZtestCam --> Twister
+    ZtestAud --> Twister
+    Twister --> CI
+```
+
+A virtual camera driver (`fake_video`) and a virtual codec (`fake_audio`) were introduced to exercise the protocols without requiring physical hardware. They expose the expected Zephyr APIs and provide deterministic data generation.
+
+This allows stream configuration, capture, topology generation, widget control, and error paths—including simulated `-ENOMSG` transport failures—to be validated entirely within the Zephyr CI test environment before introducing physical hardware into the development cycle.
