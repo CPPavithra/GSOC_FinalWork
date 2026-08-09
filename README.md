@@ -1,7 +1,7 @@
 # Implementing Missing Greybus Multimedia Protocols in Zephyr
 
 > **Google Summer of Code 2026**  
-> **Organization:** BeagleBoard.org Foundation / The Zephyr Project  
+> **Organization:** The Linux Foundation
 > **Contributor:** Pavithra C.P.  
 > **Mentors:** Ayush Singh, Jason Kridner
 
@@ -391,5 +391,68 @@ flowchart TD
 ```
 
 A virtual camera driver (`fake_video`) and a virtual codec (`fake_audio`) were introduced to exercise the protocols without requiring physical hardware. They expose the expected Zephyr APIs and provide deterministic data generation.
-
 This allows stream configuration, capture, topology generation, widget control, and error paths—including simulated `-ENOMSG` transport failures—to be validated entirely within the Zephyr CI test environment before introducing physical hardware into the development cycle.
+
+## Results & Project Impact
+
+The project delivered the missing Greybus Camera and Audio protocol implementations while extending Zephyr's multimedia infrastructure with hardware-independent validation.
+
+| Area | Result |
+|---|---|
+| **Protocols** | Greybus Camera and Greybus Audio implemented |
+| **Virtual Drivers** | `fake_video` and `fake_audio` added for simulation |
+| **Automated Testing** | `ztest` suites integrated with Twister |
+| **Hardware Independence** | Protocol behavior validated through `native_sim` |
+| **Upstream Integration** | Implementation developed through focused, reviewable pull requests |
+| **API Modernization** | Legacy Video and Audio API integration migrated to current Zephyr interfaces |
+| **Memory Management** | Protocol execution designed around deterministic allocation |
+| **Legacy Code** | Significant legacy Camera and Audio code removed while expanding functionality |
+
+The resulting implementation provides a reusable foundation for Greybus multimedia support in Zephyr while keeping protocol logic independent from individual hardware drivers.
+
+---
+
+## Future Work
+
+The current implementation establishes the software foundation for Greybus multimedia support. Further work can extend validation and protocol coverage across additional hardware and use cases.
+
+- **Physical Hardware Validation** — Validate Camera and Audio data paths on BeaglePlay and BeagleConnect hardware.
+- **Protocol Expansion** — Extend Greybus multimedia support to additional operations and device capabilities.
+- **Upstream Refinement** — Incorporate further maintainer feedback and continue aligning the implementation with evolving Zephyr APIs.
+
+---
+
+## Acknowledgements
+
+This project was completed as part of **Google Summer of Code 2026** with **The Linux Foundation** and **BeagleBoard.org Foundation**.
+
+Many thanks to my mentors, **Ayush Singh** and **Jason Kridner**, for their technical guidance, architectural feedback, and continued support throughout the project.
+
+Thanks to the Linux Foundation, BeagleBoard.org and Zephyr communities for maintaining the open-source infrastructure that made this work possible, and to the Google Summer of Code program for providing the opportunity to contribute to a production-grade embedded ecosystem.
+
+---
+
+## Resources
+
+| Resource | Link |
+|---|---|
+| **GSoC 2026 Proposal** | [Project Proposal](#) |
+| **Weekly Progress Reports** | [GSoC Weekly Progress Thread](#) |
+| **Greybus Zephyr Repository** | [beagleboard/greybus-zephyr](https://github.com/beagleboard/greybus-zephyr) |
+| **BeagleBoard.org Foundation** | [beagleboard.org](https://www.beagleboard.org/) |
+| **Zephyr Project** | [zephyrproject.org](https://www.zephyrproject.org/) |
+| **Detailed Final Report** | [Full Technical Report](#) |
+
+> **Note:** The detailed final report contains the deeper implementation history, design trade-offs, debugging process, and challenges encountered throughout the project. This README intentionally focuses on the architecture, implementation, validation strategy, and upstream contributions.
+
+---
+
+## Project Repository
+
+The complete implementation and upstream contribution history are available in the Greybus Zephyr repository.
+
+**[View the Greybus Zephyr Repository →](https://github.com/beagleboard/greybus-zephyr)**
+
+---
+
+*Google Summer of Code 2026 · BeagleBoard.org Foundation · Zephyr Project*
