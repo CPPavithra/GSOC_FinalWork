@@ -1,9 +1,10 @@
-# Implementing Missing Greybus Multimedia Protocols in Zephyr
+# Implementing Greybus Camera and Audio Protocols in Zephyr
 
 > **Google Summer of Code 2026**  
 > **Organization:** The Linux Foundation
+
 > **Contributor:** Pavithra C.P.  
-> **Mentors:** Ayush Singh, Jason Kridner
+> **Mentors:** Ayush Singh, Jason Kidner
 
 ---
 
@@ -20,7 +21,7 @@
 
 ## Overview
 
-This repository documents the implementation of the Greybus Camera and Audio protocols developed for Zephyr during Google Summer of Code 2026.
+This repository documents the implementation of the Greybus Camera and Audio protocols in Zephyr developed for BeagleBoard during Google Summer of Code 2026 under The Linux Foundation/
 
 Greybus provides a standardized protocol for connecting Linux hosts with embedded peripherals. While the Greybus transport layer already existed in Zephyr, multimedia support remained incomplete.
 
@@ -106,24 +107,36 @@ The following table summarizes the primary deliverables produced during the proj
 | `ztest` Validation | ✅ |
 | `native_sim` Support | ✅ |
 | Documentation | ✅ |
+| Hardware procurement | ✅ |
+| Hardware Testing Completely |  |
 
 A detailed list of upstream pull requests and implementation milestones is provided in the **Pull Requests & Deliverables** section.
 
 ---
 
-## Upstream Contributions
+## Upstream Contributions- Pull Requests and Devilerables
 
 The project followed an incremental upstream development model, with functionality introduced through focused pull requests rather than a single monolithic submission. This reduced review complexity, encouraged early maintainer feedback, and aligned with Zephyr's contribution workflow.
 
-### Project at a Glance
+All the PRs are linked [here](https://github.com/beagleboard/greybus-zephyr/pulls?q=is%3Apr+is%3Aclosed+author%3ACPPavithra).
 
+### Project at a Glance
+ 
+GSOC 
 | Metric | Value |
 |---------|------:|
-| **Merged Pull Requests** | **X** |
-| **Commits** | **XX** |
-| **Files Changed** | **XX** |
-| **Lines Added** | **+X,XXX** |
-| **Lines Removed** | **-X,XXX** |
+| **Merged Pull Requests** | **14** |
+| **Commits** | **36** |
+| **Lines Added** | **+2259** |
+| **Lines Removed** | **-2199** |
+
+Pre-GSOC (PWM Support and GPIO & Loopback Tests)
+| Metric | Value |
+|---------|------:|
+| **Merged Pull Requests** | **3** |
+| **Commits** | **3** |
+| **Lines Added** | **+388** |
+| **Lines Removed** | **-49** |
 
 ---
 
@@ -132,15 +145,14 @@ The project followed an incremental upstream development model, with functionali
 The Camera protocol formed the foundation of the project and therefore evolved through multiple focused pull requests. Early contributions established the subsystem architecture, while subsequent reviews refined implementation details and aligned the codebase with upstream expectations.
 
 This iterative review process helped shape the development workflow used throughout the remainder of the project.
-
 | Pull Request | Status | What it Delivered |
-|---------------|:------:|-------------------|
-| **#105** — Drivers: Camera: Add virtual camera driver for `native_sim` | ✅ Merged | *Update summary* |
-| **#108** — camera: modernize handlers and migrate to `gb_message` API | ✅ Merged | *Update summary* |
-| **#111** — greybus: camera: streaming operations with Zephyr Video API | 🔄 Superseded | Initial implementation that was later refactored and split following upstream review. |
-| **#112** — greybus: camera: implement dynamic stream configuration and capture handlers | ✅ Merged | *Update summary* |
-| **#117** — Camera data plane architecture MVP | ✅ Merged | *Update summary* |
-| **#119** — subsys: camera: migrate to new `video_driver_flush` API | ✅ Merged | *Update summary* |
+|---|:---:|---|
+| **[#105](https://github.com/beagleboard/greybus-zephyr/pull/105)** - Drivers: Camera: Add virtual camera driver for `native_sim` | ✅ Merged | Added `fake_camera.c`, a hardware-independent virtual camera for Zephyr’s Video subsystem on `native_sim`. Implemented streaming, buffer enqueue/dequeue, format handling, `k_fifo` buffer management, and `k_timer`-based 10 FPS frame simulation. Added proper Kconfig/CMake integration and migrated testing to a `ztest` suite. |
+| **[#108](https://github.com/beagleboard/greybus-zephyr/pull/108)** - camera: modernize handlers and migrate to `gb_message` API | ✅ Merged | Modernized the Greybus Camera handlers and migrated operation handling from the legacy `gb_operation` API to the newer `gb_message` transport. |
+| **[#111](https://github.com/beagleboard/greybus-zephyr/pull/111)** - greybus: camera: streaming operations with Zephyr Video API | 🔄 Superseded | Initial implementation of Greybus Camera streaming operations using Zephyr’s Video API. Later refactored and split into smaller PRs following upstream review. |
+| **[#112](https://github.com/beagleboard/greybus-zephyr/pull/112)** - greybus: camera: implement dynamic stream configuration and capture handlers | ✅ Merged | Implemented dynamic stream configuration and capture handling, connecting Greybus Camera requests with Zephyr’s Video subsystem and enabling frame capture through the protocol. |
+| **[#117](https://github.com/beagleboard/greybus-zephyr/pull/117)** - Camera data plane architecture MVP | ✅ Merged | Implemented the initial camera data-plane architecture for transferring captured frames over Greybus. Added buffer management, frame fragmentation, and buffer recycling using a static, heap-free design. |
+| **[#119](https://github.com/beagleboard/greybus-zephyr/pull/119)** - subsys: camera: migrate to new `video_driver_flush` API | ✅ Merged | Updated the camera subsystem to use Zephyr’s new `video_driver_flush` API, keeping the Greybus Camera implementation compatible with the modernized Video subsystem. |
 
 ---
 
@@ -153,21 +165,37 @@ As a result, the Audio subsystem required fewer pull requests while introducing 
 A test-driven workflow was adopted throughout development: each protocol operation was implemented together with its corresponding `ztest` validation before progressing to the next feature. This ensured that every functional addition was immediately covered by automated tests and helped keep the Continuous Integration pipeline green throughout development.
 
 | Pull Request | Status | What it Delivered |
-|---------------|:------:|-------------------|
-| **#116** — audio: audio driver for MVP | ✅ Merged | *Update summary* |
-| **#118** — subsys: greybus: Add audio protocol support and `ztest` integration | ✅ Merged | *Update summary* |
+|---|:---:|---|
+| **[#120](https://github.com/beagleboard/greybus-zephyr/pull/120)** - audio: Implement Greybus Audio Teardown, Events, and Power Management | ✅ Merged | Completed the Greybus Audio control path by implementing stream teardown, event handling, and power-management operations. This completed the key lifecycle operations required for managing Greybus Audio streams. |
+| **[#118](https://github.com/beagleboard/greybus-zephyr/pull/118)** - subsys: greybus: Add audio protocol support and ztest integration | ✅ Merged | Added Greybus Audio protocol support with `ztest` integration for hardware-independent validation. Introduced automated tests for the implemented audio protocol handlers and their interaction with the Zephyr audio subsystem. |
+| **[#116](https://github.com/beagleboard/greybus-zephyr/pull/116)** - audio: audio driver for mvp | ✅ Merged | Introduced the initial Audio driver MVP, providing the foundation for Greybus Audio stream handling and protocol-level testing within Zephyr. |
 
 ---
+### Additional / Supporting Contributions
+
+| Pull Request | Status | What it Delivered |
+|---|:---:|---|
+| **[#106](https://github.com/beagleboard/greybus-zephyr/pull/106)** — Update `beagleconnect_freedom` board targets | ✅ Merged | Updated the BeagleConnect Freedom board targets to keep the project aligned with the current Zephyr board definitions and build infrastructure. |
+| **[#107](https://github.com/beagleboard/greybus-zephyr/pull/107)** — subsys: greybus: migrate to `TLS_CREDENTIAL_PUBLIC_CERTIFICATE` | ❌ Closed | Attempted to migrate Greybus TLS credential handling to Zephyr's newer `TLS_CREDENTIAL_PUBLIC_CERTIFICATE` API. The work was ultimately closed rather than merged and integrated with a different PR as it was just a 1 line change. |
+| **[#94](https://github.com/beagleboard/greybus-zephyr/pull/94)** — pwm: add dynamic multi-channel support via devicetree | ✅ Merged | Added dynamic multi-channel PWM support using Zephyr Devicetree configuration, enabling PWM channels to be described and configured without hard-coded channel definitions. |
+| **[#90](https://github.com/beagleboard/greybus-zephyr/pull/90)** — Introduced new test suite for PWM protocol — basic test | ✅ Merged | Added a dedicated ztest-based test suite for the Greybus PWM protocol, establishing automated validation for basic PWM operations. |
+| **github.com/beagleboard/greybus-zephyr/pull/78** — tests: loopback & gpio: add edge-case and boundary validation | ✅ Merged | Expanded Greybus Loopback and GPIO testing with edge-case and boundary-condition validation, improving protocol robustness and regression coverage. |
 
 ### Development Timeline
 
 | Milestone | Outcome |
-|-----------|---------|
-| **Foundation** | Established the development environment and introduced a virtual camera driver for `native_sim`. |
-| **Camera Infrastructure** | Modernized the Camera subsystem and migrated to the `gb_message` API. |
-| **Camera Features** | Added stream configuration, capture handlers, and the Camera data plane. |
-| **Audio Protocol** | Implemented the Audio driver, Greybus Audio protocol, topology handling, and protocol validation. |
-| **API Migration** | Updated the subsystem to use the latest `video_driver_flush` API following upstream changes. |
+|---|---|
+| **Foundation & Testing** | Established the development environment, expanded Greybus protocol test coverage, and introduced the virtual Camera driver for `native_sim` to enable hardware-independent development and validation. |
+| **Camera Infrastructure** | Modernized the Greybus Camera subsystem and migrated protocol handling to the `gb_message` API, establishing the foundation for Camera protocol implementation using Zephyr's Video subsystem. |
+| **Camera Features & Data Plane** | Implemented dynamic stream configuration, capture and streaming operations, followed by the Camera data plane for frame transfer, buffer management, fragmentation, and recycling. |
+| **Camera Completion & API Alignment** | Completed the Camera protocol implementation and migrated the subsystem to Zephyr's new `video_driver_flush` API, bringing the implementation in line with upstream Video subsystem changes. |
+| **Audio Driver & Core Protocol** | Introduced the Audio driver MVP and implemented the core Greybus Audio operations, including PCM configuration and control handling, establishing the foundation for the Audio protocol. |
+| **Dynamic Audio Topology** | Implemented `GET_TOPOLOGY_SIZE` and `GET_TOPOLOGY`, dynamically constructing and transmitting a compliant ALSA topology containing DAIs, Controls, and Widgets. Added statically allocated, aligned buffers for predictable RTOS memory usage. |
+| **Audio Stream Activation** | Implemented `ACTIVATE_TX` and `ACTIVATE_RX` with Greybus Audio state-machine validation, ensuring streams can only be activated after successful PCM configuration. Added comprehensive `native_sim` `ztest` coverage for the activation flow. |
+| **Audio Data & Event Handling** | Extended the Audio implementation to support PCM data transfer and interrupt/event handling, enabling the protocol to progress beyond configuration into actual stream operation. |
+| **Audio Lifecycle & Power Management** | Completed the remaining Audio lifecycle operations, including stream teardown, event handling, and power-management support, bringing the Greybus Audio implementation to a complete protocol lifecycle. |
+| **Hardware Validation** | Began hardware-level validation of the implemented Greybus functionality using the BeagleConnect Freedom and BeaglePlay, moving beyond `native_sim` testing to validate the protocol stack and communication on physical hardware. |
+| **Validation & Upstream Integration** | Integrated the implemented Camera and Audio functionality with Zephyr's testing infrastructure, validated protocol behavior through hardware-independent tests, and upstreamed the completed changes through reviewed and merged PRs. |
 
 ---
 
@@ -404,7 +432,7 @@ The project delivered the missing Greybus Camera and Audio protocol implementati
 | **Automated Testing** | `ztest` suites integrated with Twister |
 | **Hardware Independence** | Protocol behavior validated through `native_sim` |
 | **Upstream Integration** | Implementation developed through focused, reviewable pull requests |
-| **API Modernization** | Legacy Video and Audio API integration migrated to current Zephyr interfaces |
+| **API Modernization** | Legacy Video and Audio API integration (previously nutanix code) migrated to current Zephyr interfaces |
 | **Memory Management** | Protocol execution designed around deterministic allocation |
 | **Legacy Code** | Significant legacy Camera and Audio code removed while expanding functionality |
 
@@ -426,7 +454,7 @@ The current implementation establishes the software foundation for Greybus multi
 
 This project was completed as part of **Google Summer of Code 2026** with **The Linux Foundation** and **BeagleBoard.org Foundation**.
 
-Many thanks to my mentors, **Ayush Singh** and **Jason Kridner**, for their technical guidance, architectural feedback, and continued support throughout the project.
+Many thanks to my mentors, **Ayush Singh** and **Jason Kidner**, for their technical guidance, architectural feedback, and continued support throughout the project.
 
 Thanks to the Linux Foundation, BeagleBoard.org and Zephyr communities for maintaining the open-source infrastructure that made this work possible, and to the Google Summer of Code program for providing the opportunity to contribute to a production-grade embedded ecosystem.
 
@@ -455,4 +483,4 @@ The complete implementation and upstream contribution history are available in t
 
 ---
 
-*Google Summer of Code 2026 · BeagleBoard.org Foundation · Zephyr Project*
+*Google Summer of Code 2026 · The Linux Foundation · BeagleBoard.org Foundation · Zephyr Project*
