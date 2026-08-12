@@ -464,12 +464,12 @@ Thanks to the Linux Foundation, BeagleBoard.org and Zephyr communities for maint
 
 | Resource | Link |
 |---|---|
-| **GSoC 2026 Proposal** | [Project Proposal](#) |
-| **Weekly Progress Reports** | [GSoC Weekly Progress Thread](#) |
+| **GSoC 2026 Proposal** | [Project Proposal](https://docs.google.com/document/d/1sTkjRjtG-BepgoTwk_uiY9mMByCsaJcvwooTdJe_mnY/edit?usp=sharing) |
+| **Weekly Progress Reports** (Not fully updated yet) | [GSoC Weekly Progress Thread](https://forum.beagleboard.org/t/weekly-progress-report-implement-missing-greybus-protocols-in-zephyr/43993/15) |
 | **Greybus Zephyr Repository** | [beagleboard/greybus-zephyr](https://github.com/beagleboard/greybus-zephyr) |
 | **BeagleBoard.org Foundation** | [beagleboard.org](https://www.beagleboard.org/) |
 | **Zephyr Project** | [zephyrproject.org](https://www.zephyrproject.org/) |
-| **Detailed Final Report** | [Full Technical Report](#) |
+| **Detailed Final Report** (Not ready yet) | [Full Technical Report](#) |
 
 > **Note:** The detailed final report contains the deeper implementation history, design trade-offs, debugging process, and challenges encountered throughout the project. This README intentionally focuses on the architecture, implementation, validation strategy, and upstream contributions.
 
