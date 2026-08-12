@@ -179,7 +179,7 @@ A test-driven workflow was adopted throughout development: each protocol operati
 | **[#107](https://github.com/beagleboard/greybus-zephyr/pull/107)** — subsys: greybus: migrate to `TLS_CREDENTIAL_PUBLIC_CERTIFICATE` | ❌ Closed | Attempted to migrate Greybus TLS credential handling to Zephyr's newer `TLS_CREDENTIAL_PUBLIC_CERTIFICATE` API. The work was ultimately closed rather than merged and integrated with a different PR as it was just a 1 line change. |
 | **[#94](https://github.com/beagleboard/greybus-zephyr/pull/94)** — pwm: add dynamic multi-channel support via devicetree | ✅ Merged | Added dynamic multi-channel PWM support using Zephyr Devicetree configuration, enabling PWM channels to be described and configured without hard-coded channel definitions. |
 | **[#90](https://github.com/beagleboard/greybus-zephyr/pull/90)** — Introduced new test suite for PWM protocol — basic test | ✅ Merged | Added a dedicated ztest-based test suite for the Greybus PWM protocol, establishing automated validation for basic PWM operations. |
-| **github.com/beagleboard/greybus-zephyr/pull/78** — tests: loopback & gpio: add edge-case and boundary validation | ✅ Merged | Expanded Greybus Loopback and GPIO testing with edge-case and boundary-condition validation, improving protocol robustness and regression coverage. |
+| **[#78](github.com/beagleboard/greybus-zephyr/pull/78)** — tests: loopback & gpio: add edge-case and boundary validation | ✅ Merged | Expanded Greybus Loopback and GPIO testing with edge-case and boundary-condition validation, improving protocol robustness and regression coverage. |
 
 ### Development Timeline
 
