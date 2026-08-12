@@ -4,7 +4,7 @@
 > **Organization:** The Linux Foundation
 
 > **Contributor:** Pavithra C.P.  
-> **Mentors:** Ayush Singh, Jason Kidner
+> **Mentors:** Ayush Singh, Jason Kridner
 
 ---
 
@@ -454,7 +454,7 @@ The current implementation establishes the software foundation for Greybus multi
 
 This project was completed as part of **Google Summer of Code 2026** with **The Linux Foundation** and **BeagleBoard.org Foundation**.
 
-Many thanks to my mentors, **Ayush Singh** and **Jason Kidner**, for their technical guidance, architectural feedback, and continued support throughout the project.
+Many thanks to my mentors, **Ayush Singh** and **Jason Kridner**, for their technical guidance, architectural feedback, and continued support throughout the project.
 
 Thanks to the Linux Foundation, BeagleBoard.org and Zephyr communities for maintaining the open-source infrastructure that made this work possible, and to the Google Summer of Code program for providing the opportunity to contribute to a production-grade embedded ecosystem.
 
