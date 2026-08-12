@@ -21,7 +21,7 @@
 
 ## Overview
 
-This repository documents the implementation of the Greybus Camera and Audio protocols in Zephyr developed for BeagleBoard during Google Summer of Code 2026 under The Linux Foundation/
+This repository documents the implementation of the Greybus Camera and Audio protocols in Zephyr developed for BeagleBoard during Google Summer of Code 2026 under The Linux Foundation.
 
 Greybus provides a standardized protocol for connecting Linux hosts with embedded peripherals. While the Greybus transport layer already existed in Zephyr, multimedia support remained incomplete.
 
@@ -114,7 +114,7 @@ A detailed list of upstream pull requests and implementation milestones is provi
 
 ---
 
-## Upstream Contributions- Pull Requests and Devilerables
+## Upstream Contributions- Pull Requests and Deliverables
 
 The project followed an incremental upstream development model, with functionality introduced through focused pull requests rather than a single monolithic submission. This reduced review complexity, encouraged early maintainer feedback, and aligned with Zephyr's contribution workflow.
 
@@ -194,7 +194,7 @@ A test-driven workflow was adopted throughout development: each protocol operati
 | **Audio Stream Activation** | Implemented `ACTIVATE_TX` and `ACTIVATE_RX` with Greybus Audio state-machine validation, ensuring streams can only be activated after successful PCM configuration. Added comprehensive `native_sim` `ztest` coverage for the activation flow. |
 | **Audio Data & Event Handling** | Extended the Audio implementation to support PCM data transfer and interrupt/event handling, enabling the protocol to progress beyond configuration into actual stream operation. |
 | **Audio Lifecycle & Power Management** | Completed the remaining Audio lifecycle operations, including stream teardown, event handling, and power-management support, bringing the Greybus Audio implementation to a complete protocol lifecycle. |
-| **Hardware Validation** | Began hardware-level validation of the implemented Greybus functionality using the BeagleConnect Freedom and BeaglePlay, moving beyond `native_sim` testing to validate the protocol stack and communication on physical hardware. |
+| **Hardware Validation** |⏳ Ongoing-  Began hardware-level validation of the implemented Greybus functionality using the BeagleConnect Freedom and BeaglePlay, moving beyond `native_sim` testing to validate the protocol stack and communication on physical hardware. |
 | **Validation & Upstream Integration** | Integrated the implemented Camera and Audio functionality with Zephyr's testing infrastructure, validated protocol behavior through hardware-independent tests, and upstreamed the completed changes through reviewed and merged PRs. |
 
 ---
